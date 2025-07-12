@@ -1,0 +1,6 @@
+apiVersion: v2
+description: isolated nmstate deployment
+keywords:
+- pattern
+name: nmstate
+version: 0.0.1

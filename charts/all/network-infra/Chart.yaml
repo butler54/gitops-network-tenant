@@ -1,0 +1,6 @@
+apiVersion: v2
+description: deploy the network interfaces
+keywords:
+- pattern
+name: network-infra
+version: 0.0.1

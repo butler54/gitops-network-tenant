@@ -1,0 +1,57 @@
+# --- ValidatingAdmissionPolicy Definition ---
+# This resource defines the "what" and the "how": what rules to enforce
+# and how to check them using a CEL expression.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: "require-non-root-in-tenant-namespaces"
+spec:
+  # 'Fail' ensures that any request that violates the policy is rejected.
+  failurePolicy: Fail
+
+  # This policy is scoped to Pods during their creation or update.
+  matchConstraints:
+    resourceRules:
+    - apiGroups:   [""]
+      apiVersions: ["v1"]
+      operations:  ["CREATE", "UPDATE"]
+      resources:   ["pods"]
+
+  # 'validations' contains the core logic as a CEL expression.
+  validations:
+    - expression: |
+        # This CEL expression uses a logical implication:
+        # IF the namespace name starts with 'tenant-'
+        # THEN the pod's security context must specify runAsNonRoot: true.
+        #
+        # The formula for implication (A -> B) is equivalent to (!A || B).
+        #
+        # A = namespace.name.startsWith('tenant-')
+        # B = has(object.spec.securityContext) && object.spec.securityContext.runAsNonRoot == true
+        #
+        # If the namespace doesn't match the 'tenant-' prefix, the expression short-circuits to 'true' and passes.
+        # If it does match, the second part of the expression is evaluated to enforce the security setting.
+        !namespace.name.startsWith('tenant-') ||
+        (has(object.spec.securityContext) && object.spec.securityContext.runAsNonRoot == true)
+      message: "Pods created in namespaces with the prefix 'tenant-' must have spec.securityContext.runAsNonRoot set to true."
+
+---
+
+# --- ValidatingAdmissionPolicyBinding ---
+# A policy itself does nothing until it is "bound" to a scope.
+# This binding activates the policy defined above cluster-wide.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: "require-non-root-in-tenant-namespaces-binding"
+spec:
+  # Links this binding to the policy by its metadata.name.
+  policyName: "require-non-root-in-tenant-namespaces"
+
+  # Specifies the action to take upon a validation failure from the policy.
+  # 'Deny' will block the request. 'Warn' would allow the request but log a warning.
+  validationActions: [Deny]
+
+  # This binding applies the policy to all resources that the policy's
+  # matchConstraints are configured to watch. Since the namespace logic is
+  # handled within the CEL expression itself, we don't need a namespaceSelector here.

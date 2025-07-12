@@ -1,0 +1,8 @@
+
+
+global:
+  tenants:
+    - name: foo
+      vlanID: 1235 
+    - name: bar
+      vlanID: 1254

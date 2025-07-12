@@ -1,0 +1,21 @@
+{{- range .Values.global.tenants }}
+{{- if not (kindIs "int" .vlanID) -}}
+    {{- fail (printf "Validation failed for : value '%v' is not an integer. Please provide a whole number." .vlanID) -}}
+{{- end -}}
+{{- if or (lt .vlanID 2) (gt .vlanID 4096) -}}
+{{- fail (printf "Validatio[n failed for vlanID: value '%d' is out of the allowed range. It must be between 2 and 4096 (inclusive)." .vlanID) -}}
+{{- end -}}
+{{- include "tenants.validation.cidr" (dict "value" .vlanID "name" ".vlanID") -}}
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tenant-{{ .name }}
+  labels:
+    name: tenant-{{ .name }}
+  annnotations:
+    tenant.vlanID: {{ .vlanID }}
+    tenant.cidr: {{ .cidr }}
+
+{{- end -}}
