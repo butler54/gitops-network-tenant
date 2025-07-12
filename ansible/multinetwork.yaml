@@ -1,0 +1,22 @@
+- name: Apply multinetwork policy patch
+  become: false
+  connection: local
+  hosts: localhost
+  gather_facts: false
+  vars:
+    kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+  tasks:
+    - name: Patch the cluster Network object
+      kubernetes.core.k8s:
+        state: patched
+        api_version: operator.openshift.io/v1
+        kind: Network
+        name: cluster
+        definition:
+          spec:
+            useMultiNetworkPolicy: true
+      register: patch_result
+
+    - name: Display patch result
+      debug:
+        var: patch_result.result.spec.useMultiNetworkPolicy 

@@ -65,7 +65,11 @@ clusterGroup:
       chart: golang-external-secrets
       chartVersion: 0.1.*
     nmstate:
-      name: 
+      name: nmstate
+      namespace: nmstate
+      project: hub
+      path: charts/all/nmstate
+
   imperative:
     # NOTE: We *must* use lists and not hashes. As hashes lose ordering once parsed by helm
     # The default schedule is every 10 minutes: imperative.schedule
@@ -75,7 +79,7 @@ clusterGroup:
     # https://hybrid-cloud-patterns.io/imperative-actions/#additional-job-customizations
     jobs:
       - name: multinetwork
-        playbook: ansible/multi-network.yaml
+        playbook: ansible/multinetwork.yaml
   managedClusterGroups:
     exampleRegion:
       name: group-one
